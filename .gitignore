@@ -1,0 +1,20 @@
+# Entorno virtual
+.venv/
+
+# Cache de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Metadata de empaquetado
+*.egg-info/
+dist/
+build/
+
+# Pytest / tooling
+.pytest_cache/
+.ruff_cache/
+
+# VS Code
+.vscode/

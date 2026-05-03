@@ -1,8 +1,0 @@
-streamlit>=1.33
-pandas>=2.1
-numpy>=1.26
-aiohttp>=3.9
-tenacity>=8.2
-tqdm>=4.66
-openpyxl>=3.1
-plotly>=5.20
