@@ -1,0 +1,14 @@
+Metadata-Version: 2.4
+Name: descarga-pml
+Version: 0.1.0
+Summary: Descarga automática de PML (MDA) desde CENACE, análisis y exportación.
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: streamlit>=1.33
+Requires-Dist: pandas>=2.1
+Requires-Dist: numpy>=1.26
+Requires-Dist: aiohttp>=3.9
+Requires-Dist: tenacity>=8.2
+Requires-Dist: tqdm>=4.66
+Requires-Dist: openpyxl>=3.1
+Requires-Dist: plotly>=5.20
