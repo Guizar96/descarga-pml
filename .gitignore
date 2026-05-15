@@ -1,20 +1,22 @@
 # Entorno virtual
 .venv/
 
-# Cache de Python
+# Cache Python
 __pycache__/
 *.pyc
 *.pyo
-*.pyd
 
-# Metadata de empaquetado
+# Metadata de packaging
 *.egg-info/
-dist/
 build/
+dist/
 
-# Pytest / tooling
-.pytest_cache/
-.ruff_cache/
+# Streamlit cache (opcional)
+.streamlit/
 
 # VS Code
 .vscode/
+
+# Archivos exportados
+*.xlsx
+*.zip
