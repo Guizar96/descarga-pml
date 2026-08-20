@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import time
-from typing import Optional
+from datetime import date
+from typing import Iterable, Optional
 
 import aiohttp
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
@@ -10,12 +11,14 @@ from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_excep
 from pml.config.settings import Settings
 
 
-class CenacePmlClient:
+class CenacePendClient:
+    """Cliente para el servicio web SW-PEND (Precios de Energía en Nodos Distribuidos / Zonas de Carga)."""
+
     def __init__(self, settings: Settings):
         self.settings = settings
         self._session: Optional[aiohttp.ClientSession] = None
 
-    async def __aenter__(self) -> "CenacePmlClient":
+    async def __aenter__(self) -> "CenacePendClient":
         timeout = aiohttp.ClientTimeout(
             total=self.settings.timeout_total_s,
             connect=self.settings.timeout_connect_s,
@@ -28,8 +31,20 @@ class CenacePmlClient:
             await self._session.close()
             self._session = None
 
-    def build_url(self, nodo: str, fecha_inicio: str, fecha_fin: str, mercado: str = "MDA") -> str:
-        return f"{self.settings.base_url}/SWPML/SIM/SIN/{mercado}/{nodo}/{fecha_inicio}/{fecha_fin}/JSON"
+    def build_url(
+        self,
+        sistema: str,
+        mercado: str,
+        zonas: Iterable[str],
+        fecha_inicio: date,
+        fecha_fin: date,
+    ) -> str:
+        lista_zc = ",".join(z.strip().upper().replace(" ", "-") for z in zonas)
+        return (
+            f"{self.settings.base_url}/SWPEND/SIM/{sistema}/{mercado}/{lista_zc}/"
+            f"{fecha_inicio.year}/{fecha_inicio.month:02d}/{fecha_inicio.day:02d}/"
+            f"{fecha_fin.year}/{fecha_fin.month:02d}/{fecha_fin.day:02d}/JSON"
+        )
 
     def _retry_decorator(self):
         return retry(
@@ -43,11 +58,18 @@ class CenacePmlClient:
             reraise=True,
         )
 
-    async def fetch_json(self, nodo: str, fecha_inicio: str, fecha_fin: str, mercado: str = "MDA") -> tuple[dict, int, float]:
+    async def fetch_json(
+        self,
+        sistema: str,
+        mercado: str,
+        zonas: Iterable[str],
+        fecha_inicio: date,
+        fecha_fin: date,
+    ) -> tuple[dict, int, float]:
         if not self._session:
-            raise RuntimeError("ClientSession no inicializada. Usa: async with CenacePmlClient(settings) as client")
+            raise RuntimeError("ClientSession no inicializada. Usa: async with CenacePendClient(settings) as client")
 
-        url = self.build_url(nodo, fecha_inicio, fecha_fin, mercado)
+        url = self.build_url(sistema, mercado, zonas, fecha_inicio, fecha_fin)
 
         @_wrap(self._retry_decorator())
         async def _do():

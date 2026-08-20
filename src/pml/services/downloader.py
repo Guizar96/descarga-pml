@@ -6,7 +6,7 @@ from typing import Callable, Iterable, Optional
 
 from pml.clients.cenace_client import CenacePmlClient
 from pml.config.settings import Settings
-from pml.domain.models import FetchResult, RequestTask
+from pml.domain.models import FetchResult, Mercado, RequestTask
 
 
 def split_date_range(fecha_inicio: date, fecha_fin: date, bloque_dias: int) -> list[tuple[date, date]]:
@@ -23,12 +23,21 @@ class PmlDownloader:
     def __init__(self, settings: Settings):
         self.settings = settings
 
-    def build_tasks(self, nodos: dict[str, str], fecha_inicio: date, fecha_fin: date) -> list[RequestTask]:
+    def build_tasks(
+        self,
+        nodos: dict[str, str],
+        fecha_inicio: date,
+        fecha_fin: date,
+        mercados: Iterable[Mercado] = ("MDA",),
+    ) -> list[RequestTask]:
         bloques = split_date_range(fecha_inicio, fecha_fin, self.settings.bloque_dias)
         tasks: list[RequestTask] = []
-        for nodo, nombre in nodos.items():
-            for ini, fin in bloques:
-                tasks.append(RequestTask(nodo=nodo, nombre=nombre, fecha_inicio=ini, fecha_fin=fin))
+        for mercado in mercados:
+            for nodo, nombre in nodos.items():
+                for ini, fin in bloques:
+                    tasks.append(
+                        RequestTask(nodo=nodo, nombre=nombre, fecha_inicio=ini, fecha_fin=fin, mercado=mercado)
+                    )
         return tasks
 
     async def run(
@@ -46,7 +55,7 @@ class PmlDownloader:
 
             async with sem:
                 try:
-                    payload, status, elapsed = await client.fetch_json(t.nodo, ini, fin)
+                    payload, status, elapsed = await client.fetch_json(t.nodo, ini, fin, t.mercado)
                     ok = status == 200
                     fr = FetchResult(task=t, ok=ok, status=status, payload=payload, elapsed_s=elapsed)
                 except Exception as e:

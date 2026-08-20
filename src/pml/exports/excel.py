@@ -4,7 +4,7 @@ from datetime import datetime
 from pathlib import Path
 import pandas as pd
 
-from pml.analysis.summary import build_pml_monthly_summary
+from pml.analysis.summary import build_pend_monthly_summary, build_pml_monthly_summary
 from pml.services.node_catalog import NodeCatalog
 
 
@@ -120,6 +120,70 @@ class ExcelExporter:
                 )
 
             # ✅ CRÍTICO PARA BYTESIO
+            writer.close()
+
+        except Exception as e:
+            writer.close()
+            raise e
+
+        return path
+
+    def export_pend(
+        self,
+        df_raw: pd.DataFrame,
+        df_err: pd.DataFrame | None,
+        meta: dict,
+        path,
+    ):
+        """Exporta resultados del SW-PEND (Precios de Energía en Nodos Distribuidos / Zonas de Carga)."""
+
+        if df_raw is None:
+            df_raw = pd.DataFrame()
+
+        df_raw = df_raw.copy()
+
+        if "Hora" in df_raw.columns and df_raw["Hora"].notna().all():
+            df_raw["Hora"] = df_raw["Hora"].astype(int)
+
+        meta2 = dict(meta)
+        meta2["generated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        df_meta = pd.DataFrame([meta2])
+
+        try:
+            df_summary = build_pend_monthly_summary(df_raw) if not df_raw.empty else pd.DataFrame()
+        except Exception:
+            df_summary = pd.DataFrame()
+
+        writer = pd.ExcelWriter(path, engine="openpyxl")
+
+        try:
+            hojas = 0
+
+            if not df_raw.empty:
+                df_raw.to_excel(writer, sheet_name="RAW", index=False)
+                hojas += 1
+
+            if not df_meta.empty:
+                df_meta.to_excel(writer, sheet_name="META", index=False)
+                hojas += 1
+
+            if df_summary is not None and not df_summary.empty:
+                df_summary.to_excel(writer, sheet_name="SUMMARY", index=False)
+                hojas += 1
+
+            if isinstance(df_err, pd.DataFrame) and not df_err.empty:
+                df_err.to_excel(writer, sheet_name="ERRORS", index=False)
+                hojas += 1
+
+            if hojas == 0:
+                pd.DataFrame({
+                    "Mensaje": ["No hay datos disponibles para exportar"]
+                }).to_excel(
+                    writer,
+                    sheet_name="INFO",
+                    index=False
+                )
+
             writer.close()
 
         except Exception as e:

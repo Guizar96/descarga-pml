@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 @dataclass
 class Settings:
-    base_url: str = "https://ws01.cenace.gob.mx:8082/SWPML/SIM/SIN/MDA"
+    base_url: str = "https://ws01.cenace.gob.mx:8082"
     bloque_dias: int = 7
     concurrency: int = 10
     timeout_total_s: int = 60
